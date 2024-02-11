@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v**'
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build_linux_x86-64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Packages
+        run: sudo apt install -y libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
+
+      - name: Configure Luis
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build Luis
+        run: cmake --build build --parallel 2
+
+      - name: Rename Executable
+        run: mv bin/luis bin/luis_linux_x86-64
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: bin/luis_linux_x86-64
+
+  build_windows_x86-64:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Packages
+        run: pip install jinja2
+
+      - name: Configure Luis
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "Unix Makefiles"
+
+      - name: Build Luis
+        run: cmake --build build --parallel 2
+
+      - name: Rename Executable
+        run: mv bin/luis.exe bin/luis_windows_x86-64.exe
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: bin/luis_windows_x86-64.exe
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build_linux_x86-64, build_windows_x86-64]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Copy x86-64 Binaries to the Root Folder
+        run: cp artifact/luis_linux_x86-64 luis && cp artifact/luis_windows_x86-64.exe luis.exe
+
+      - name: Create x86-64 Packages
+        run: |
+          zip -r luis_windows_x86-64.zip luis.exe LICENSE.md
+          tar -czf luis_linux_x86-64.tar.gz luis LICENSE.md
+
+      - name: Release linux_x86-64 Version of Luis
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{secrets.GITHUB_TOKEN}}
+          file: luis_linux_x86-64.tar.gz
+          tag: ${{github.ref}}
+
+      - name: Release windows_x86-64 Version of Luis
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{secrets.GITHUB_TOKEN}}
+          file: luis_windows_x86-64.zip
+          tag: ${{github.ref}}
