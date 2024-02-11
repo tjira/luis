@@ -11,13 +11,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # set compiler flags
-set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Og -fprofile-arcs -ftest-coverage -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Og -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELEASE "-mavx -s -O3")
 
 # static link on windows
 if (WIN32)
     string(APPEND CMAKE_CXX_FLAGS_RELEASE " -static")
     string(APPEND CMAKE_CXX_FLAGS_DEBUG " -static")
+    if (CMAKE_BUILD_TYPE STREQUAL Release)
+        string(APPEND CMAKE_CXX_FLAGS_RELEASE " -mwindows")
+    endif()
 endif()
 
 # set glfw cmake flags
@@ -81,11 +84,6 @@ add_executable(luis
     ${implot_SOURCE_DIR}/implot_demo.cpp
     ${implot_SOURCE_DIR}/implot_items.cpp
 )
-
-# add a specific windows release flag
-if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL Release)
-    target_compile_options(glfw PRIVATE "-mwindows")
-endif()
 
 # link luis executable
 target_link_libraries(luis glad glfw glm::glm ImGuiFileDialog)
