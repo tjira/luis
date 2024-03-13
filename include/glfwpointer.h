@@ -14,7 +14,7 @@
 struct GLFWwindow;
 
 struct GLFWPointer {
-    std::string title = "Hazel Viewer"; glm::vec2 mouse; GLFWwindow* window;
+    std::string title = "Luis"; glm::vec2 mouse; GLFWwindow* window;
     int width = WIDTH, height = HEIGHT, samples = 16, major = 4, minor = 2;
     int highlight = -1;
     struct Camera {
